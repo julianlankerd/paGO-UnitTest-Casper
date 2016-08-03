@@ -1,3 +1,12 @@
+/*Make sure to add in a call so that jQuery is loaded properly!*/
+
+function checkExists($a){//Needs work
+	if($a===undefined||$a===null){
+		return false;
+	}
+	return true;
+}
+
 function charSet(type){
 	var newObj={starts:[],ends:[]};
 	newObj.getSize=function(){
@@ -98,16 +107,6 @@ function charSet(type){
 		default://Go on and add your own character set!
 			break;
 	}
-	for(var i=0;i<newObj.starts.length;i++){//This part is just for Cypress
-		if(newObj.starts[i]=="{"){	//
-			newObj.starts[i]="{{}";	//
-		}				//
-	}					//
-	for(var i=0;i<newObj.ends.length;i++){	//
-		if(newObj.ends[i]=="{"){	//
-			newObj.ends[i]="{{}";	//
-		}				//
-	}					//
 	return newObj;
 }
 
@@ -227,87 +226,83 @@ function randomString($argsObj){//Generates a random string; geared to work with
 	}
 }
 
-function checkExists($a){//Needs work
-	if($a==undefined||$a==null){
-		return false;
+//Check this again
+/*
+function traverse($func,$args,$context,$selector){
+	if(!checkExists($selector)){
+		$selector="a";
+	}
+	var hrefs=$.map($($selector),function(element){	//Make a list of hyperlinks
+		return $(element).attr("href");		//
+	});						//
+	var temp=page.url;
+	for(var i=0,i<hrefs.length;i++){
+		if(checkExists($func)){//Make sure function exists
+			tabs.create().open(hrefs[i],function(status){//Open the webpage
+				$func.apply($context,$args);//Do something here
+			});
+		}else{
+			tabs.create().open(hrefs[i]);//Open the webpage
+		}
+	}
+}*/
+
+function contentShouldExclude($strings){//Defaults to checking for 404's
+	if(!checkExists($strings)){
+		$strings=["not found","can't be found",".php","error"];
+	}
+	for(var i in $("*:visible:not(:empty):not(:has(*))")){
+		for(var j in $strings){
+			if(i.textContent==j){
+				return false;
+			}
+		}
 	}
 	return true;
 }
 
-//Check this again
-function traverse($func,$args,$context,$selector="a"){
-	cy.get($selector).then(function($a){//Get all of the hyperlinked elements
-		var hrefs=$a.map(function(i, el){//Make a list of hyperlinks
-			return $(el).attr("href");
-		});
-		_.each(hrefs,function(href){
-			cy.visit(domain+href);//Go to a hyperlink
-			if(checkExists($func)){//Make sure function exists
-				$func.apply($context,$args);//Do something here
-			}
-		});
-	});
-}
-
-function contentShouldExclude($strings=["not found","can't be found",".php","error"]){//Defaults to checking for 404's
-	cy.get("*:visible:not(:empty):not(:has(*))").then(function($b){//Tries to select text-only elements; needs to be improved
-		_.each($b,function(i){
-			_.each($strings,function(j){
-				expect(i.textContent).to.not.contain([j])//Compares the text of an element to an error message
-			});
-		});
-	});
-}
-
 function selectFrom($elements,$property,$value){
-	var result=undefined;
 	var keyIns=Object.keys($elements);
 	for(var i=0;i<keyIns.length;i++){
 		if($elements[keyIns[i]][$property]===$value){
-			result=$elements[i];
+			return $elements[keyIns[i]];
 		}
 	}
-	return result;
+	return undefined;
 }
 
-//Used to automatically login to the backend of Joomla!	
-function joomlalogin(){
-	cy.pause();
-	var loginWindow=window.open(backEnd+"index.php?option=com_pago");
-	setTimeout(function(){
-		loginWindow.close();
-	},3000);
-	setTimeout(function(){
-		cy.resume();
-		//cy.visit(backEnd + "index.php?option=com_pago");
-		cy.end();
-	},4000);
+function select($parent,$val){
+	var element=selectFrom($($parent).children(),'textContent',$val);
+	if(element===undefined){
+		element=selectFrom($($parent).children(),'value',$val);
+	}
+	if(element===undefined){
+		return false;
+	}
+	element=$(element);
+	element.trigger('mousedown');
+	element.trigger('focus');
+	element.trigger('mouseup');
+	element.trigger('click');
+	return true;
 }
 
 //Selects a random option for each 'select' element that's a child of the region
-function SelectRandom($region,$selector,$attribute='selected'){
+function SelectRandom($region,$selector,$attribute){
+	if(!checkExists($attribute)){
+		$attribute="selected";
+	}
 	/*TODO: Will need to set all input based interactions in here eventually*/
-	var x = $($region);
+	var x=$($region);
 	for(var i=0;i<x.length;i++){
-   		for(var j=0;j<x[i].length;j++){
-      		x[i].children[j].removeAttribute($attribute);
-   			}
+		for(var j=0;j<x[i].length;j++){
+			x[i].children[j].removeAttribute($attribute);
 		}
-   	for(var i=0;i<x.length;i++){
-       var findOptions=x[i].getElements($selector);
-       var TheOne=Math.floor(Math.random()*findOptions.length);
-      // console.log(findOptions[TheOne]);
-       findOptions[TheOne].setAttribute($attribute,$attribute);
-    }
+	}
+	for(var i=0;i<x.length;i++){
+		var findOptions=x[i].getElements($selector);
+		var TheOne=Math.floor(Math.random()*findOptions.length);
+		console.log(findOptions[TheOne]);
+		findOptions[TheOne].setAttribute($attribute,$attribute);
+	}
 }
-/*Hexadecimal generator. This is simply used for any color changing aspects of paGO*/
-function getRandomColor() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++ ) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
-
