@@ -1,49 +1,34 @@
 var globals={};
 var casper=require('casper').create({
-	clientScripts:[
-		'includes/jquery.min.js',	//Script(s) will be injected in remote DOM on every request
-		'includes/paGO_Test_Includes.js'//
-	],
+//	clientScripts:[
+//		'includes/jquery.min.js',	//Script(s) will be injected in remote DOM on every request
+//		'includes/paGO_Test_Includes.js'//
+//	],
 	verbose:true,
-	logLevel:"info"
+	logLevel:"debug"
 });
-casper.start('http://localhost/');
+casper.start();
 casper.then(function(){
-	casper.then(function(){
-		casper.then(function(){
-			globals.username='admin',
-			globals.password='admin',
-			globals.frontEnd=casper.cli.get("url");
-		});
-		casper.then(function(){
-			globals.backEnd=globals.frontEnd+"administrator/";
-			globals.fatalError=function(){console.log("A fatal error occured!")},
-			globals.abort=function(){console.log("Aborting...")},
-			globals.error="Error: ";
-		});
-	});
+	/*Load out libraries so that they're available everywhere in this scope*/
+	phantom.injectJs("includes/jquery.min.js");
+	phantom.injectJs("includes/paGO_Test_Includes.js");
+	/*These variables are used throughout the test*/
+	globals.username='admin',
+	globals.password='admin',
+	globals.frontEnd=casper.cli.get("url");
+	globals.backEnd=globals.frontEnd+"administrator/index.php?option=com_pago";
 });
 casper.then(function(){
-	casper.then(function(){
-		var keez=Object.keys(globals);
-		for(var i=0;i<keez.length;i++){
-			console.log(keez[i]+": "+globals[keez[i]]);
-		}
-	});
-//	casper.then(PagoDash);
-	casper.then(function(){
-		console.log(globals.PagoDashSuccess);
-//		this.wait('5000',function(){
-//			if(globals.PagoDashSuccess){
-//				casper.then(console.log("Successfully opened 'paGO' module."));
-//			}else{
-//				casper.then(fatalError);
-//				casper.then(function(){console.log("Couldn't open 'paGO' module!")});
-//				casper.then(abort);
-//				casper.then(this.exit);
-//			}
-//		});
-	});
+	casper.open(globals.backEnd);
+});
+/*For debugging and stuff*/
+casper.then(function(){
+	var keez=Object.keys(globals);
+	for(var i=0;i<keez.length;i++){
+		console.log(keez[i]+": "+globals[keez[i]]);
+	}
+	console.log(checkExists);
+	console.log("Hi!");
 });
 casper.run(function(){
 	this.exit();
