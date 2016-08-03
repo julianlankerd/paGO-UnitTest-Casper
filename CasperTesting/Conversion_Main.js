@@ -1,31 +1,50 @@
-var casper = require('casper').create({
-	clientScripts:  [
-        'includes/paGO_Test_Includes.js'      //Script(s) will be injected in remote DOM on every request
-    ],
-	verbose: true,
-	logLevel: "info"
-
+var globals={};
+var casper=require('casper').create({
+	clientScripts:[
+		'includes/jquery.min.js',	//Script(s) will be injected in remote DOM on every request
+		'includes/paGO_Test_Includes.js'//
+	],
+	verbose:true,
+	logLevel:"info"
 });
-
-//var backend = "http://localhost/Mr.Bince-is-my-Hero%3C3/administrator/index.php";
-
-casper.start(casper.cli.get('Login'), function() {
-	this.fillSelectors('form#form-login', {
-		'input[name="username"]': 'admin',
-		'input[name="passwd"]': 'admin'
-	}, true);
-	casper.options.waitTimeout = 1000;
-	this.wait('5000', function(){
-		this.echo('Page title is: ' + this.evaluate(function(){
-	    	return document.title;
-	    }), 'INFO');
-	})
-	
+casper.start('http://localhost/');
+casper.then(function(){
+	casper.then(function(){
+		casper.then(function(){
+			globals.username='admin',
+			globals.password='admin',
+			globals.frontEnd=casper.cli.get("url");
+		});
+		casper.then(function(){
+			globals.backEnd=globals.frontEnd+"administrator/";
+			globals.fatalError=function(){console.log("A fatal error occured!")},
+			globals.abort=function(){console.log("Aborting...")},
+			globals.error="Error: ";
+		});
+	});
 });
-
+casper.then(function(){
+	casper.then(function(){
+		var keez=Object.keys(globals);
+		for(var i=0;i<keez.length;i++){
+			console.log(keez[i]+": "+globals[keez[i]]);
+		}
+	});
+//	casper.then(PagoDash);
+	casper.then(function(){
+		console.log(globals.PagoDashSuccess);
+//		this.wait('5000',function(){
+//			if(globals.PagoDashSuccess){
+//				casper.then(console.log("Successfully opened 'paGO' module."));
+//			}else{
+//				casper.then(fatalError);
+//				casper.then(function(){console.log("Couldn't open 'paGO' module!")});
+//				casper.then(abort);
+//				casper.then(this.exit);
+//			}
+//		});
+	});
+});
 casper.run(function(){
 	this.exit();
 });
-
-//Command to run the script:
-//casperjs Conversion_Main.js --Login="http://localhost/Mr.Bince-is-my-Hero%3C3/administrator/index.php?option=com_pago"
