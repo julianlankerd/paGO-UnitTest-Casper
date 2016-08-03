@@ -24,7 +24,6 @@ casper.start(casper.cli.get('Login'), function() {
 });
 
 casper.run(function(){
-	console.log(this.getRandomColor());
 	this.exit();
 });
 
