@@ -1,6 +1,6 @@
 var casper = require('casper').create({
 	clientScripts:  [
-        'includes/paGO_Test_Includes.js'      // These two scripts will be injected in remote DOM on every request
+        'includes/paGO_Test_Includes.js'      //Script(s) will be injected in remote DOM on every request
     ],
 	verbose: true,
 	logLevel: "info"
