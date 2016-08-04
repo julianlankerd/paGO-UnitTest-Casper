@@ -1,3 +1,25 @@
+/*Used to log into 'paGO' backend*/
+function PagoLogin(){
+	casper.then(function(){
+		var loginHandler=function(){
+			globals.PagoLoginSuccess=(selectFrom(phantom.cookies,'name',"pago_id")!==undefined);
+			casper.echo("CAUGHT!","WARNING");
+			/*Change this next line to cancel the wait statement farther down*/
+			casper.once("wait.done",function(){
+				globals.PagoLoginSuccess=true;
+			});
+		};
+		casper.once("load.finished",loginHandler);
+		casper.fill('form#form-login',{
+			'username':globals.username,
+			'passwd':globals.password
+		},true);
+		casper.wait(globals.pageLoadTimeout,function(){
+			casper.removeListener("load.finished",loginHandler);
+			globals.PagoLoginSuccess=false;
+		});
+	});
+}
 /*Check for any error labels left in the aftermath of the Input function, and if there are any error labels it will assign a numeric value*/
 function errorScan(){
     var errorFields=$('label.label-error');
@@ -69,8 +91,8 @@ function CreateProduct(){
 /*This will Begin testing the Categories section*/
 
 function CreateCategory(){
-	cy.get('#pago > div.pg-sidebar > ul > li.pg-menu-shop > span').click()//Click on the 'caret' then Drop the shop menu down
-	.get("#pago > div.pg-sidebar > ul > li.pg-menu-shop.open > div > ul > li:nth-child(2) > a").click()//Go to the categories menu
+	$('#pago > div.pg-sidebar > ul > li.pg-menu-shop > span').click()//Click on the 'caret' then Drop the shop menu down
+	$("#pago > div.pg-sidebar > ul > li.pg-menu-shop.open > div > ul > li:nth-child(2) > a").click()//Go to the categories menu
 		cy.get("#pago_toolbar > button.new.pg-btn-medium.pg-btn-green.pg-btn-dark").click()				//Make a new category and save it
 		var categoryName=randomString({maxLen:20,minLen:1,charSet:centerKybd});						//
 		cy.get("#params_name").type(categoryName)									//
