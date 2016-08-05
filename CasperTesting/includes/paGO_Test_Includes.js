@@ -177,17 +177,9 @@ function randomString($argsObj){//Generates a random string; geared to work with
 			lenSideB=segments[2];
 			var index=Math.floor(Math.random()*starts.length);
 			var temp=starts[index];
-			if(temp=='{'){
-				strArr[2]='{{}';
-			}else{
-				strArr[2]=temp;
-			}
+			strArr[2]=temp;
 			temp=ends[index];
-			if(temp=='{'){
-				strArr[6]='{{}';
-			}else{
-				strArr[6]=temp;
-			}
+			strArr[6]=temp;
 			calls++;
 			if(calls-1==callEmbed){					//If we're in the right position then add in the embedded string
 				switch(posEmbed){				//
@@ -271,6 +263,15 @@ function selectFrom($elements,$property,$value){
 	return undefined;
 }
 
+function getPos($elements,$element){
+	var keyIns=Object.keys($elements);
+	for(var i=0;i<keyIns.length;i++){
+		if($elements[keyIns[i]]===$element){
+			return i;
+		}
+	}
+}
+
 function select($parent,$val){
 	var element=selectFrom($($parent).children(),'textContent',$val);
 	if(element===undefined){
@@ -292,7 +293,7 @@ function SelectRandom($region,$selector,$attribute){
 	if(!checkExists($attribute)){
 		$attribute="selected";
 	}
-	/*TODO: Will need to set all input based interactions in here eventually*/
+	//TODO: Will need to set all input based interactions in here eventually
 	var x=$($region);
 	for(var i=0;i<x.length;i++){
 		for(var j=0;j<x[i].length;j++){
@@ -305,4 +306,20 @@ function SelectRandom($region,$selector,$attribute){
 		console.log(findOptions[TheOne]);
 		findOptions[TheOne].setAttribute($attribute,$attribute);
 	}
+}
+
+/*FIXME*/
+function waitLoaded($func,$variable){
+	casper.then(function(){
+		casper.waitFor(function(){
+			$func();
+			return casper.evaluate(function(){
+				return true;
+			});
+		},function(){
+			$variable=true;
+		},function(){
+			$variable=false;
+		},globals.pageLoadTimeout);
+	});
 }
