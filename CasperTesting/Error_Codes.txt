@@ -1,0 +1,4 @@
+0 - No error.  
+1 - User error.  
+2 - Configuration error.  
+3 - Connection error.  
