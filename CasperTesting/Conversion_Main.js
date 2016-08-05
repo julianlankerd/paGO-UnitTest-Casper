@@ -10,38 +10,55 @@ var casper=require('casper').create({
 	verbose:true,
 	logLevel:"debug"
 });
+/*Change the screen size for very page*/
+casper.on("page.initialized",function(webPage){
+	casper.page.viewportSize={width:1600,height:900};
+});
 casper.start();
 casper.then(function(){
-	if(!phantom.cookiesEnabled){
-		casper.echo("Critical error: this script can not work correctly without cookies enabled.","ERROR");
-		casper.exit();
-	}
+	//Examine the next statement in a comedic sense
+	/*It's not possible to continue without cookies*/
+	casper.then(function(){
+		if(!phantom.cookiesEnabled){
+			casper.echo("Critical error: this script can not work correctly without cookies enabled.","ERROR");
+			casper.exit();
+		}
+	});
 	/*Load out libraries so that they're available everywhere in this scope*/
-	if(phantom.injectJs("includes/jquery.min.js")&&
-	phantom.injectJs("includes/paGO_Function.js")&&
-	phantom.injectJs("includes/paGO_Test_Includes.js")){
-		casper.echo("Successfully loaded resources.","INFO");
-	}else{
-		casper.echo("Critical error: resources not loaded properly.","ERROR");
-		casper.echo("Maybe a file is in the wrong place?","COMMENT");
-		casper.exit();
-	}
-	/*These variables are used throughout the test*/
-	globals.username='admin',
-	globals.password='admin',
-	globals.pageLoadTimeout=Number(casper.cli.get("timeout"));
-	globals.frontEnd=casper.cli.get("url");
-	globals.backEnd=globals.frontEnd+"administrator/index.php?option=com_pago";
-});
-casper.then(function(){
-	if(globals.frontEnd===""||!checkExists(globals.frontEnd)){
-		casper.echo("Critical error: no 'url' argument specified.",'ERROR');
-		casper.echo("Try using '--url=\"<'paGO's location here'>\"' on the command line.","COMMENT");
-		casper.exit();
-	}
-	if(globals.pageLoadTimeout==="NaN"){
-		globals.pageLoadTimeout=5000;
-	}
+	casper.then(function(){
+		if(phantom.injectJs("includes/jquery.min.js")&&
+		phantom.injectJs("includes/paGO_Function.js")&&
+		phantom.injectJs("includes/paGO_Test_Includes.js")){
+			casper.echo("Successfully loaded resources.","INFO");
+		}else{
+			casper.echo("Critical error: resources not loaded properly.","ERROR");
+			casper.echo("Maybe a file is in the wrong place?","COMMENT");
+			casper.exit();
+		}
+	});
+	/*Get command-line variables and make them global*/
+	casper.then(function(){
+		globals.username='admin',
+		globals.password='admin',
+		globals.pageLoadTimeout=Number(casper.cli.get("timeout"));
+		globals.frontEnd=casper.cli.get("url");
+		globals.backEnd=globals.frontEnd+"administrator/index.php?option=com_pago";
+	});
+	/*Detect argument errors from the user*/
+	casper.then(function(){
+		if(globals.frontEnd===""||!checkExists(globals.frontEnd)){
+			casper.echo("Critical error: no 'url' argument specified.",'ERROR');
+			casper.echo("Try using '--url=\"<'paGO's location here'>\"' on the command line.","COMMENT");
+			casper.exit();
+		}
+
+	});
+	/*Deal with default arguments*/
+	casper.then(function(){
+		if(globals.pageLoadTimeout==="NaN"){
+			globals.pageLoadTimeout=5000;
+		}
+	});
 });
 casper.then(function(){
 	casper.open(globals.backEnd);
