@@ -21,7 +21,7 @@ casper.then(function(){
 	casper.then(function(){
 		if(!phantom.cookiesEnabled){
 			casper.echo("Critical error: this script can not work correctly without cookies enabled.","ERROR");
-			casper.exit();
+			casper.exit(2);
 		}
 	});
 	/*Load out libraries so that they're available everywhere in this scope*/
@@ -33,7 +33,7 @@ casper.then(function(){
 		}else{
 			casper.echo("Critical error: resources not loaded properly.","ERROR");
 			casper.echo("Maybe a file is in the wrong place?","COMMENT");
-			casper.exit();
+			casper.exit(2);
 		}
 	});
 	/*Get command-line variables and make them global*/
@@ -48,42 +48,77 @@ casper.then(function(){
 	casper.then(function(){
 		if(globals.frontEnd===""||!checkExists(globals.frontEnd)){
 			casper.echo("Critical error: no 'url' argument specified.",'ERROR');
-			casper.echo("Try using '--url=\"<'paGO's location here'>\"' on the command line.","COMMENT");
-			casper.exit();
+			casper.echo("Try using '--url=\"<paGO's location here'>\"' on the command line.","COMMENT");
+			casper.exit(1);
 		}
-
 	});
 	/*Deal with default arguments*/
 	casper.then(function(){
-		if(globals.pageLoadTimeout==="NaN"){
+		if(isNaN(globals.pageLoadTimeout)||globals.pageLoadTimeout<=0){
 			globals.pageLoadTimeout=5000;
 		}
+		globals.PagoLoginSuccess=false;
+		globals.CreateCategorySuccess=false;
+		globals.addCategory=true;
+		globals.hasProduct=false;
+		globals.category={categoryName:randomString({maxLen:20,minLen:1,charSet:centerKybd}),listNode:undefined};
+	});
+	casper.then(function(){
+		casper.echo("Initialization successfull.","INFO");
 	});
 });
+/*Open paGO's back end and take a pretty pretty picture*/
 casper.then(function(){
 	casper.open(globals.backEnd);
 	casper.then(function(){
 		casper.page.render("screenshots/backEnd.png");
 	});
 });
+/*FIXME*/
+/*Log in to pago*/
 casper.then(function(){
-	//PagoLogin needs to be implemented
 	casper.then(PagoLogin);
 	casper.then(function(){
 		casper.page.render("screenshots/backEnd-login.png");
 		if(globals.PagoLoginSuccess){
-			casper.echo("Successfully logged in to 'paGO' back end.","INFO");
+			casper.echo("Successfully logged in to paGO back end.","INFO");
 		}else{
-			casper.echo("Critical error: could not log in to 'paGO' back end.","ERROR");
-			casper.echo("Perhaps there's something wrong with the cookiejar file?","COMMENT");
-			casper.exit();
+			casper.echo("Critical error: could not log in to paGO back end.","ERROR");
+			casper.echo("Is there something wrong with the cookiejar file?","COMMENT");
+			casper.echo("Perhaps you've set the timeout too low?","COMMENT");
+			casper.exit(3);
 		}
 	});
 });
+/*FIXME: Not tested with the new login*/
 //casper.then(function(){
-//	globals.CreateCategorySuccess=CreateCategory();
+//	casper.then(CreateCategory);
+//	casper.then(function(){
+//		if(globals.CreateCategorySuccess){
+//			casper.echo("Successfully created a category.","INFO");
+//			globals.addCategory=true;
+//		}else{
+//			casper.echo("Error: couldn't create a category.","COMMENT");
+//			globals.addCategory=false;
+//		}
+//	});
+//});
+/*CreateProduct needs to be migrated to casperjs from cypress*/
+//casper.then(function(){
+//	casper.then(function(){
+//		CreateProduct(globals.addCategory);
+//	});
+//	casper.then(function(){
+//		if(globals.CreateProductSuccess){
+//			casper.echo("Successfully created a category.","INFO");
+//			globals.hasProduct=true;
+//		}else{
+//			casper.echo("Error: couldn't create a product.","COMMENT");
+//			globals.hasProduct=false;
+//		}
+//	})
 //});
 casper.run(function(){
-	casper.echo("'paGO' test successfully finished.","INFO");
-	casper.exit();
+	casper.echo("paGO test finished successfully.","INFO");
+	casper.exit(0);
 });

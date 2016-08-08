@@ -1,24 +1,37 @@
-/*Used to log into 'paGO' backend*/
+/*Used to log into paGO backend*/
 function PagoLogin(){
+	/*FIXME*/
+	/*This needs to be fixed so that it works with async better - accesses "waitLoaded" in "paGO_Test_Includes.js"*/
 	casper.then(function(){
-		var loginHandler=function(){
-			globals.PagoLoginSuccess=(selectFrom(phantom.cookies,'name',"pago_id")!==undefined);
-			casper.echo("CAUGHT!","WARNING");
-			/*Change this next line to cancel the wait statement farther down*/
-			casper.once("wait.done",function(){
-				globals.PagoLoginSuccess=true;
-			});
-		};
-		casper.once("load.finished",loginHandler);
-		casper.fill('form#form-login',{
-			'username':globals.username,
-			'passwd':globals.password
-		},true);
-		casper.wait(globals.pageLoadTimeout,function(){
-			casper.removeListener("load.finished",loginHandler);
-			globals.PagoLoginSuccess=false;
-		});
+		waitLoaded(function(){
+			casper.fill('form#form-login',{
+				'username':globals.username,
+				'passwd':globals.password
+			},true);
+		},globals.PagoLoginSuccess);
 	});
+	casper.then(function(){
+		casper.echo(globals.PagoLoginSuccess,"ERROR");
+		globals.PagoLoginSuccess=globals.PagoLoginSuccess&&(selectFrom(phantom.cookies,'name',"pago_id")!==undefined);
+		casper.echo(globals.PagoLoginSuccess,"ERROR");
+	});
+//	casper.then(function(){
+//		casper.waitFor(function(){
+//			casper.fill('form#form-login',{
+//				'username':globals.username,
+//				'passwd':globals.password
+//			},true);
+//			return casper.evaluate(function(){
+//				return true;
+//			});
+//		},function(){
+//			globals.PagoLoginSuccess=(selectFrom(phantom.cookies,'name',"pago_id")!==undefined);
+//			casper.echo("CAUGHT!","ERROR");
+//		},function(){
+//			globals.PagoLoginSuccess=false;
+//			casper.echo(":(","ERROR");
+//		},globals.pageLoadTimeout);
+//	});
 }
 /*Check for any error labels left in the aftermath of the Input function, and if there are any error labels it will assign a numeric value*/
 function errorScan(){
@@ -35,6 +48,57 @@ function Input(){
 	}
 }
 
+/*This will Begin testing the Categories section*/
+
+function CreateCategory(){
+//	casper.then(function(){
+//		/*Get rid of every category item using paGO's built in call*/
+//		casper.evaluate(funciton($element){
+//			pago_check_all($element,'tbody td.pg-checkbox input');
+//		},$("#checkall")[0]);
+//		casper.click('#pago_toolbar > button.delete');
+//	});
+	casper.then(function(){
+		casper.click('#pago > div.pg-sidebar > ul > li.pg-menu-shop > span');//Click on the inverted carat and drop the shop menu down
+	});
+	casper.then(function(){
+		casper.click("#pago > div.pg-sidebar > ul > li.pg-menu-shop.open > div > ul > li:nth-child(2) > a");//Go to the categories menu
+	});
+	casper.then(function(){
+		/*Make a new category and save it*/
+		casper.click("#pago_toolbar > button.new.pg-btn-medium.pg-btn-green.pg-btn-dark");
+		casper.sendKeys("#params_name",globals.category.categoryName);
+		casper.sendKeys("#params_alias",randomString({maxLen:20,minLen:1,charSet:centerKybd}));
+//		Needs to be migrated from cypress to casperjs
+//		.get("*").then(function($a){
+//			SelectRandom('fieldset', 'input', 'checked');
+//			SelectRandom('select', 'option');
+//		})
+		casper.click("#pago_toolbar > button:nth-child(2)");
+
+		/*Add assertion statement here?*/
+		casper.then(function(){
+			globals.category.selector="#pg-categories-manager > tbody > tr > td.pg-category-name > a";
+			var elements=$(globals.category.selector);
+			globals.category.listNode=selectFrom(elements,"textContent",categoryName);
+			globals.CreateCategorySuccess=(globals.category.listNode!==undefined);
+			globals.category.selector+=":nth-child("+(getPos(elements,globals.category.listNode)+1)+")";
+		})
+	});
+	/*Check that it exists*/
+	casper.then(function(){
+		if(globals.CreateCategorySuccess){
+			casper.click('#pago > div.pg-sidebar > ul > li.pg-menu-shop.current.open > div > ul > li:nth-child(2) > a');//Go to the categories menu
+			casper.click(globals.category.selector);//Go back to the category
+			casper.click("#pago_toolbar > button:nth-child(1)");//Use the other save button and exit
+			casper.click(globals.category.selector);//Go back again
+			casper.click("#pago_toolbar > button:nth-child(3)");//Save and new
+			casper.click("#pago_toolbar > button:nth-child(4)");//Cancel the new category
+		}
+	});
+}
+
+/*CreateProduct needs to be migrated to casperjs from cypress*/
 /*This function will generate a random product*/
 function CreateProduct(){
 	var temp=HTMLText;
@@ -86,45 +150,6 @@ function CreateProduct(){
 	/*This will delete the item(s) generated*/
 	/*.get('#checkall').check({force:true})				
 	.get('#pago_toolbar > button.delete').click({force:true})	*/
-}
-
-/*This will Begin testing the Categories section*/
-
-function CreateCategory(){
-	$('#pago > div.pg-sidebar > ul > li.pg-menu-shop > span').click()//Click on the 'caret' then Drop the shop menu down
-	$("#pago > div.pg-sidebar > ul > li.pg-menu-shop.open > div > ul > li:nth-child(2) > a").click()//Go to the categories menu
-		cy.get("#pago_toolbar > button.new.pg-btn-medium.pg-btn-green.pg-btn-dark").click()				//Make a new category and save it
-		var categoryName=randomString({maxLen:20,minLen:1,charSet:centerKybd});						//
-		cy.get("#params_name").type(categoryName)									//
-		.get("#params_alias").type(randomString({maxLen:20,minLen:1,charSet:centerKybd}))				//
-//		.get("*").then(function($a){
-//			SelectRandom('fieldset', 'input', 'checked');
-//			SelectRandom('select', 'option');
-//		})
-		.get("#pago_toolbar > button:nth-child(2)").click()
-		
-		.then(function($a){
-			cy.get("div.alert-success").should("exist")
-		})
-		
-		.get('#pago > div.pg-sidebar > ul > li.pg-menu-shop.current.open > div > ul > li:nth-child(2) > a').click()//Go to the categories menu
-		
-		.then(function($a){													//Go back to the category
-			return selectFrom($("#pg-categories-manager > tbody > tr > td.pg-category-name > a"),"textContent",categoryName);	//
-		}).click()															//
-		
-		.get("#pago_toolbar > button:nth-child(1)").click()//Use the other save button and exit
-		
-		.then(function($a){													//Go back again
-			return selectFrom($("#pg-categories-manager > tbody > tr > td.pg-category-name > a"),"textContent",categoryName);	//
-		}).click()
-		
-		.get("#pago_toolbar > button:nth-child(3)").click()//Save and new
-		.get("#pago_toolbar > button:nth-child(4)").click()//Cancel the new category
-		
-		/*Get rid of every Category item*/
-		//.get('#checkall').check({force:true})			
-		//.get('#pago_toolbar > button.delete').click({force:true})
 }
 
 /*This is going to Create a new attribute*/
